@@ -1,0 +1,47 @@
+import pandas as pd
+import numpy as np
+import datetime as dt
+from futu import *
+code = 'TQQQ'
+date = '220311'
+# call_or_put = 'C'
+price = 50
+interval = 1
+stock1 = 'US.' + code + date +'C' + str(price + interval*-2) + '000'
+stock2 = 'US.' + code + date +'C' + str(price + interval*-1) + '000'
+stock3 = 'US.' + code + date +'C' + str(price + interval*+0) + '000'
+stock4 = 'US.' + code + date +'C' + str(price + interval*+1) + '000'
+stock5 = 'US.' + code + date +'C' + str(price + interval*+2) + '000'
+stock_list = [stock1, stock2, stock3, stock4, stock5]
+print(stock_list)
+start = '2022-03-03'
+end = '2022-03-04'
+ktype = 'K_1M'
+max_count = 2000
+quote_ctx = OpenQuoteContext(host='127.0.0.1', port=11111)
+
+# Yesterday
+df = pd.DataFrame()
+for stock in stock_list:
+    kline = ret, data, page_req_key = quote_ctx.request_history_kline(stock, start=start, end=end, ktype=ktype, max_count=max_count)
+    data.time_key = pd.to_datetime(data.time_key, infer_datetime_format=1, unit='ns')
+    df_temp = data[['time_key', 'close']]
+    df_temp['name'] = stock
+    df = pd.concat([df, df_temp])
+df_select = df[(df.time_key > '2022-03-03 09:00:00') & (df.time_key < '2022-03-03 17:00:00')]
+df_pivot = df_select.pivot(index='time_key', columns='name', values='close')
+df_pivot.plot(figsize=(20, 12)).grid(axis='y')
+
+# Today
+df = pd.DataFrame()
+for stock in stock_list:
+    kline = ret, data, page_req_key = quote_ctx.request_history_kline(stock, start=start, end=end, ktype=ktype, max_count=max_count)
+    data.time_key = pd.to_datetime(data.time_key, infer_datetime_format=1, unit='ns')
+    df_temp = data[['time_key', 'close']]
+    df_temp['name'] = stock
+    df = pd.concat([df, df_temp])
+df_select = df[(df.time_key > '2022-03-04 09:00:00') & (df.time_key < '2022-03-04 17:00:00')]
+df_pivot = df_select.pivot(index='time_key', columns='name', values='close')
+df_pivot.plot(figsize=(20, 12)).grid(axis='y')
+
+quote_ctx.close()
